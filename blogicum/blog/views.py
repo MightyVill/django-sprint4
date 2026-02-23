@@ -3,7 +3,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
-from django.views.generic import DetailView, ListView, TemplateView
+from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from .constants import DISPLAY_POSTS
@@ -111,18 +111,17 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-class BasePostView(LoginRequiredMixin, TemplateView):
+class BasePostView(LoginRequiredMixin):
     model = Post
-    template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
-    form_class = PostForm
 
     def dispatch(self, request, *args, **kwargs):
-        instance = get_object_or_404(Post, pk=self.kwargs['post_id'])
-        if instance.author != self.request.user:
-            return redirect('blog:post_detail',
-                            post_id=self.kwargs['post_id'])
-        self.object = instance
+        self.object = self.get_object()
+        if self.object.author != request.user:
+            return redirect(
+                'blog:post_detail',
+                post_id=self.object.pk
+            )
         return super().dispatch(request, *args, **kwargs)
 
     def get_success_url(self):
@@ -132,11 +131,13 @@ class BasePostView(LoginRequiredMixin, TemplateView):
         )
 
 
-class PostUpdateView(UpdateView, BasePostView):
+class PostUpdateView(BasePostView, UpdateView):
     model = Post
+    form_class = PostForm
+    template_name = 'blog/create.html'
 
 
-class PostDeleteView(DeleteView, BasePostView):
+class PostDeleteView(BasePostView, DeleteView):
     model = Post
 
     def get_success_url(self):
