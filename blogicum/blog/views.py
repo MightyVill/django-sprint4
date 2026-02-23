@@ -137,7 +137,13 @@ class PostUpdateView(BasePostView, UpdateView):
 
 
 class PostDeleteView(BasePostView, DeleteView):
-    pass
+    model = Post
+
+    def get_success_url(self):
+        return reverse(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
 
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
