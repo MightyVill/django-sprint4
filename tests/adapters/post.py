@@ -1,9 +1,10 @@
 from inspect import isclass
 from typing import Type
 
-from adapters.student_adapter import StudentModelAdapter
 from django.db import models
 from django.db.models import Model
+
+from adapters.student_adapter import StudentModelAdapter
 
 
 class PostModelAdapter(StudentModelAdapter):

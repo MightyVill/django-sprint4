@@ -1,18 +1,22 @@
 import datetime
 import random
+import re
 from http import HTTPStatus
-from typing import Any, List, Tuple, Type, Union
+from typing import Tuple, Any, Type, List, Union
 
 import django.test.client
 import pytest
 import pytz
-from adapters.post import PostModelAdapter
-from conftest import KeyVal, _TestModelAttrs, get_a_post_get_response_safely
-from django.db.models import DateTimeField, ForeignKey, Model, TextField
+from django.conf import settings
+from django.db.models import TextField, DateTimeField, ForeignKey, Model
 from django.forms import BaseForm
 from django.utils import timezone
+
+from adapters.post import PostModelAdapter
+from conftest import _TestModelAttrs, KeyVal, get_a_post_get_response_safely
 from fixtures.types import CommentModelAdapterT
-from form.base_form_tester import AuthorisedSubmitTester, FormValidationException
+from form.base_form_tester import (
+    FormValidationException, AuthorisedSubmitTester)
 from form.comment.create_form_tester import CreateCommentFormTester
 from form.comment.delete_tester import DeleteCommentTester
 from form.comment.edit_form_tester import EditCommentFormTester
@@ -54,6 +58,35 @@ def test_comment_created_at(comment, CommentModelAdapter):
     ) < datetime.timedelta(seconds=1), (
         "Убедитесь, что при создании комментария ему присваиваются текущие"
         " дата и время."
+    )
+
+
+def test_link_order_in_comment_template():
+    expected_template_dir = settings.BASE_DIR / "templates"
+    assert expected_template_dir.is_dir(), (
+        "Убедитесь, что шаблоны проекта располагаются в директории "
+        "`./blogicum/templates` (на уровне с файлом `manage.py`)."
+    )
+    comment_template_file = (
+        expected_template_dir / 'includes' / 'comments.html'
+    )
+    assert comment_template_file.is_file(), (
+        "Убедитесь, что в директории `./blogicum/templates/includes` есть "
+        "файл `comments.html`."
+    )
+    with open(
+            comment_template_file, "r", encoding="utf-8", errors="ignore"
+    ) as f:
+        comments_template = f.read()
+    expected_link_order_pattern = re.compile(
+        r"<a class=\"btn btn-sm text-muted\" href=\"{% url 'blog:edit_comment'"
+        r"[\s\S]*?<a class=\"btn btn-sm text-muted\" href=\"{% url "
+        r"'blog:delete_comment' post\.id comment\.id %}\""
+    )
+    assert expected_link_order_pattern.search(comments_template), (
+        "Не изменяйте порядок ссылок для редактировани и удаления комментария "
+        "в шаблоне `./blogicum/templates/includes/comments.html`. Первой "
+        "должна быть ссылка на редактирование, второй - на удаление."
     )
 
 
@@ -207,6 +240,7 @@ def test_comment(
     ).test_delete_item(
         qs=item_to_delete_adapter.item_cls.objects.all(),
         delete_url_addr=delete_url_addr,
+        only_base_form=True,
     )
 
     status_404_on_edit_deleted_comment_err_msg = (

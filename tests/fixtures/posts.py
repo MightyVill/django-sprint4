@@ -3,21 +3,22 @@ from io import BytesIO
 from typing import Tuple
 
 import pytest
-from conftest import (
-    N_PER_FIXTURE,
-    N_PER_PAGE,
-    KeyVal,
-    _testget_context_item_by_class,
-    get_a_post_get_response_safely,
-    get_create_a_post_get_response_safely,
-)
+from PIL import Image
 from django.core.files.images import ImageFile
 from django.db.models import Model
 from django.forms import BaseForm
 from django.test import Client
 from django.utils import timezone
 from mixer.backend.django import Mixer
-from PIL import Image
+
+from conftest import (
+    N_PER_FIXTURE,
+    N_PER_PAGE,
+    KeyVal,
+    get_a_post_get_response_safely,
+    get_create_a_post_get_response_safely,
+    _testget_context_item_by_class,
+)
 
 
 @pytest.fixture
@@ -87,6 +88,7 @@ def post_with_published_location(
     image_file = ImageFile(img_io, name='temp_image.jpg')
     post = mixer.blend(
         'blog.Post',
+        is_published=True,
         location=published_location,
         category=published_category,
         author=user,

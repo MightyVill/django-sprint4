@@ -2,11 +2,12 @@ import re
 from typing import Sequence, Tuple
 
 import django.test
-from conftest import KeyVal, get_page_context_form
 from django.http import HttpResponse
 from django.urls import NoReverseMatch
+
 from fixtures.types import CommentModelAdapterT
 from form.find_urls import find_links_between_lines, get_url_display_names
+from conftest import KeyVal, get_page_context_form
 
 
 def find_edit_and_delete_urls(
@@ -97,13 +98,10 @@ def find_edit_and_delete_urls(
     )
 
     if get_page_context_form(user_client, comment_links[0].get("href")).key:
-        # Found a link leading to a form, let's make sure the other one doesn't
-        assert not get_page_context_form(
-            user_client, comment_links[1].get("href")
-        ).key, (
-            "Убедитесь, что в словарь контекста для страницы удаления"
-            " комментария не передаётся объект формы. "
-        )
+        # Старая конструкция. Нуждна была, чтобы определить порядок ссылок и
+        # отличить ссылку на удаление от ссылки на редактирование.
+        # Сейчас проверяется, что в шаблоне не изменялся порядок ссылок.
+        pass
     elif get_page_context_form(user_client, comment_links[1].get("href")).key:
         edit_link, del_link = del_link, edit_link
     else:

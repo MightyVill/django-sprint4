@@ -1,19 +1,22 @@
 from typing import Tuple, Union
 
 import bs4
-from conftest import TitledUrlRepr
-from django.db.models import Model, QuerySet
+from django.db.models import QuerySet, Model
 from django.forms import BaseForm
 from django.http import HttpResponse
+
+from conftest import TitledUrlRepr
 from fixtures.types import ModelAdapterT
 from form.base_form_tester import (
-    FormMethodException,
     FormTagMissingException,
-    FormValidationException,
-    ItemCreatedException,
-    SubmitTester,
+    FormMethodException,
     TextareaMismatchException,
     TextareaTagMissingException,
+)
+from form.base_form_tester import (
+    SubmitTester,
+    FormValidationException,
+    ItemCreatedException,
 )
 from form.post.form_tester import PostFormTester
 
@@ -146,5 +149,5 @@ class CreatePostFormTester(PostFormTester):
         return (
             "Убедитесь, что после отправки формы создания поста правильно"
             f" работает переадресация. Проверьте, что значение поля `{prop}`"
-            " отображается на странице поста."
+            " отображается на странице, на которую был переадресован пользователь."
         )

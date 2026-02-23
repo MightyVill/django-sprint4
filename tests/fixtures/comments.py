@@ -2,8 +2,9 @@ from typing import Type
 
 import pytest
 from django.db.models import Model
-from fixtures.types import CommentModelAdapterT
 from mixer.backend.django import Mixer
+
+from fixtures.types import CommentModelAdapterT
 
 
 @pytest.fixture

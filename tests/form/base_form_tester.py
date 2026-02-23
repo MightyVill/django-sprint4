@@ -1,34 +1,35 @@
 from __future__ import annotations
 
 import re
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
 from functools import partial
 from http import HTTPStatus
 from typing import (
-    Any,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
     Set,
     Tuple,
     Type,
+    Sequence,
+    Callable,
+    Optional,
+    Dict,
+    Iterable,
+    Any,
+    List,
     Union,
 )
 
 import bs4
 import django.test
-from conftest import (
-    ItemNotCreatedException,
-    TitledUrlRepr,
-    restore_cleaned_data,
-)
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import Model, QuerySet
 from django.forms import BaseForm
 from django.http import HttpResponse
+
+from conftest import (
+    ItemNotCreatedException,
+    restore_cleaned_data,
+    TitledUrlRepr,
+)
 from fixtures.types import ModelAdapterT
 from form.base_tester import BaseTester
 
@@ -89,11 +90,31 @@ class BaseFormTester(BaseTester):
 
         soup = bs4.BeautifulSoup(response.content, features="html.parser")
 
-        form_tag = soup.find("form")
-        if not form_tag:
+        # Все формы на странице
+        forms = soup.find_all("form")
+        if not forms:
             raise FormTagMissingException()
 
+        # Фильтруем, все кроме logout-формы
+        candidates = []
+        for f in forms:
+            if (
+                ("logout" not in ((f.get("action") or "").lower()))
+                and ("выйти" not in f.get_text(" ",strip=True).lower())
+                ):
+                candidates.append(f)
+
+        if not candidates:
+            candidates = forms
+
+        if getattr(self, "has_textarea", False):
+            textarea_candidates = [f for f in candidates if f.find("textarea")]
+            if textarea_candidates:
+                candidates = textarea_candidates
+
+        form_tag = candidates[0]
         self._form_tag = form_tag
+
         self._action = self._form_tag.get("action", "") or (
             response.request["PATH_INFO"]
         )

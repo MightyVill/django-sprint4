@@ -1,6 +1,6 @@
-from abc import ABC, abstractmethod
+from abc import abstractmethod, ABC
 from inspect import isclass
-from typing import Any, Type, Union
+from typing import Union, Type, Any
 
 from django.db.models import Model
 

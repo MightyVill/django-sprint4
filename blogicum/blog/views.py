@@ -132,11 +132,11 @@ class BasePostView(LoginRequiredMixin, TemplateView):
         )
 
 
-class PostUpdateView(BasePostView, UpdateView):
-    pass
+class PostUpdateView(UpdateView, BasePostView):
+    model = Post
 
 
-class PostDeleteView(BasePostView, DeleteView):
+class PostDeleteView(DeleteView, BasePostView):
     model = Post
 
     def get_success_url(self):
