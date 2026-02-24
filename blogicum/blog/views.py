@@ -173,18 +173,23 @@ class CommentCreateView(LoginRequiredMixin,
         return super().form_valid(form)
 
 
-class CommentMixin(LoginRequiredMixin,
-                   RedirectToPostMixin):
+class CommentMixin(LoginRequiredMixin, RedirectToPostMixin):
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        get_object_or_404(
+        comment = get_object_or_404(
             Comment,
-            pk=self.kwargs['comment_id'],
-            author=request.user
+            pk=self.kwargs['comment_id']
         )
+
+        if comment.author != request.user:
+            return redirect(
+                'blog:post_detail',
+                post_id=self.kwargs['post_id']
+            )
+
         return super().dispatch(request, *args, **kwargs)
 
 
