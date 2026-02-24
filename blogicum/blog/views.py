@@ -13,11 +13,29 @@ from .models import Category, Comment, Post
 User = get_user_model()
 
 
+class RedirectToProfileMixin:
+    def get_success_url(self):
+        return reverse(
+            'blog:profile',
+            kwargs={'username': self.request.user.username}
+        )
+
+
+class RedirectToPostMixin:
+    def get_success_url(self):
+        return reverse(
+            'blog:post_detail',
+            kwargs={'post_id': self.kwargs['post_id']}
+        )
+
+
 class PostListView(ListView):
     paginate_by = DISPLAY_POSTS
     template_name = 'blog/index.html'
     pk_url_kwarg = 'post_id'
-    queryset = Post.published_posts.all()
+
+    def get_queryset(self):
+        return Post.published_posts.all()
 
 
 class PostDetailView(DetailView):
@@ -96,22 +114,22 @@ class CategoryListView(ListView):
         return self.category.posts(manager='published_posts').all()
 
 
-class PostCreateView(LoginRequiredMixin, CreateView):
+class PostCreateView(
+    LoginRequiredMixin,
+    RedirectToProfileMixin,
+    CreateView
+):
     model = Post
     form_class = PostForm
     template_name = 'blog/create.html'
-
-    def get_success_url(self):
-        return reverse('blog:profile', kwargs={
-            'username': self.request.user.username
-        })
 
     def form_valid(self, form):
         form.instance.author = self.request.user
         return super().form_valid(form)
 
 
-class BasePostView(LoginRequiredMixin):
+class BasePostView(LoginRequiredMixin,
+                   RedirectToProfileMixin):
     model = Post
     pk_url_kwarg = 'post_id'
 
@@ -124,12 +142,6 @@ class BasePostView(LoginRequiredMixin):
             )
         return super().dispatch(request, *args, **kwargs)
 
-    def get_success_url(self):
-        return reverse(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
-
 
 class PostUpdateView(BasePostView, UpdateView):
     model = Post
@@ -140,49 +152,40 @@ class PostUpdateView(BasePostView, UpdateView):
 class PostDeleteView(BasePostView, DeleteView):
     model = Post
 
-    def get_success_url(self):
-        return reverse(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
 
-
-class CommentCreateView(LoginRequiredMixin, CreateView):
+class CommentCreateView(LoginRequiredMixin,
+                        RedirectToPostMixin,
+                        CreateView):
     model = Comment
     form_class = CommentForm
     template_name = 'blog/comment.html'
 
     def get_context_data(self, **kwargs):
-        return dict(**super().get_context_data(**kwargs), form=CommentForm())
-
-    def get_success_url(self):
-        return reverse('blog:post_detail',
-                       args=[self.kwargs['post_id']])
+        return dict(**super().get_context_data(**kwargs),
+                    form=CommentForm())
 
     def form_valid(self, form):
         form.instance.author = self.request.user
-        form.instance.post = get_object_or_404(Post,
-                                               pk=self.kwargs['post_id'])
+        form.instance.post = get_object_or_404(
+            Post,
+            pk=self.kwargs['post_id']
+        )
         return super().form_valid(form)
 
 
-class CommentMixin(LoginRequiredMixin):
+class CommentMixin(LoginRequiredMixin,
+                   RedirectToPostMixin):
     model = Comment
     template_name = 'blog/comment.html'
     pk_url_kwarg = 'comment_id'
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
-            get_object_or_404(Comment,
-                              pk=self.kwargs['comment_id'],
-                              author=self.request.user)
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_success_url(self):
-        return reverse(
-            'blog:post_detail',
-            kwargs={'post_id': self.kwargs['post_id']}
+        get_object_or_404(
+            Comment,
+            pk=self.kwargs['comment_id'],
+            author=request.user
         )
+        return super().dispatch(request, *args, **kwargs)
 
 
 class CommentDeleteView(CommentMixin, DeleteView):

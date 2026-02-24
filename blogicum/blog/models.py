@@ -34,6 +34,9 @@ class Category(PublishedModel):
         verbose_name = 'категория'
         verbose_name_plural = 'Категории'
 
+    def __str__(self):
+        return self.title
+
 
 class Location(PublishedModel):
     name = models.CharField('Название места', max_length=CHARFIELD_LEN)
@@ -41,6 +44,9 @@ class Location(PublishedModel):
     class Meta:
         verbose_name = 'местоположение'
         verbose_name_plural = 'Местоположения'
+
+    def __str__(self):
+        return self.name
 
 
 class PublishedManager(models.Manager):
@@ -86,6 +92,9 @@ class Post(PublishedModel):
         verbose_name_plural = 'Публикации'
         ordering = ["-pub_date"]
 
+    def __str__(self):
+        return self.title
+
 
 class Comment(PublishedModel):
     post = models.ForeignKey(Post,
@@ -104,3 +113,6 @@ class Comment(PublishedModel):
     class Meta:
         verbose_name = 'комментарий'
         verbose_name_plural = 'Комментарии'
+
+    def __str__(self):
+        return f'Комментарий от {self.author} к "{self.post}"'
