@@ -2,31 +2,15 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Count
 from django.shortcuts import get_object_or_404, redirect
-from django.urls import reverse
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from .constants import DISPLAY_POSTS
 from .forms import CommentForm, PostForm
 from .models import Category, Comment, Post
+from .mixins import RedirectToPostMixin, RedirectToProfileMixin
 
 User = get_user_model()
-
-
-class RedirectToProfileMixin:
-    def get_success_url(self):
-        return reverse(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
-
-
-class RedirectToPostMixin:
-    def get_success_url(self):
-        return reverse(
-            'blog:post_detail',
-            kwargs={'post_id': self.kwargs['post_id']}
-        )
 
 
 class PostListView(ListView):
@@ -78,19 +62,17 @@ class ProfileListView(ListView):
         )
 
 
-class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+class ProfileUpdateView(
+    LoginRequiredMixin,
+    RedirectToProfileMixin,
+    UpdateView
+):
     model = User
     fields = ['username', 'first_name', 'last_name', 'email']
     template_name = 'blog/user.html'
 
     def get_object(self):
         return self.request.user
-
-    def get_success_url(self):
-        return reverse(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
 
 
 class CategoryListView(ListView):

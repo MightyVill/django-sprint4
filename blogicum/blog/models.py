@@ -35,7 +35,7 @@ class Category(PublishedModel):
         verbose_name_plural = 'Категории'
 
     def __str__(self):
-        return self.title
+        return self.title[:15]
 
 
 class Location(PublishedModel):
@@ -46,7 +46,7 @@ class Location(PublishedModel):
         verbose_name_plural = 'Местоположения'
 
     def __str__(self):
-        return self.name
+        return self.name[:15]
 
 
 class PublishedManager(models.Manager):
@@ -93,7 +93,7 @@ class Post(PublishedModel):
         ordering = ["-pub_date"]
 
     def __str__(self):
-        return self.title
+        return self.title[:15]
 
 
 class Comment(PublishedModel):
